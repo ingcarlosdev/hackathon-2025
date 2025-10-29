@@ -2,6 +2,8 @@
 
 import { MapContainer, TileLayer, CircleMarker, Popup, Polyline, Polygon } from "react-leaflet";
 import { useEffect, useMemo } from "react";
+import concave from "@turf/concave";
+import { featureCollection, point } from "@turf/helpers";
 import { LatLngTuple, latLngBounds } from "leaflet";
 import { useMap } from "react-leaflet";
 
@@ -75,8 +77,20 @@ export default function MapaValidacion({ puntos }: { puntos: Punto[] }) {
     return map;
   }, [puntos]);
 
-  // Perímetro aproximado del lote con convex hull
-  const hull = useMemo(() => convexHullLatLng(puntos.map((p) => [p.lat, p.lon] as LatLngTuple)), [puntos]);
+  // Perímetro del lote: intentar concave hull; fallback a convex hull
+  const hull = useMemo(() => {
+    const coords = puntos.map((p) => [p.lon, p.lat]);
+    if (coords.length < 3) return puntos.map((p) => [p.lat, p.lon] as LatLngTuple);
+    try {
+      const fc = featureCollection(coords.map((c) => point(c)));
+      const poly = concave(fc, { maxEdge: 0.25, units: "kilometers" });
+      if (poly && poly.geometry.type === "Polygon") {
+        const ring = poly.geometry.coordinates[0] || [];
+        return ring.map(([lng, lat]) => [lat, lng] as LatLngTuple);
+      }
+    } catch {}
+    return convexHullLatLng(puntos.map((p) => [p.lat, p.lon] as LatLngTuple));
+  }, [puntos]);
 
   const colorForLine = (lineKey: string) => {
     const colors = ["#0ea5e9", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#14b8a6"];

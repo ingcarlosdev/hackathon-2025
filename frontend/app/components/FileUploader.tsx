@@ -111,6 +111,24 @@ export default function FileUploader() {
     "Lote",
   ];
 
+  const canSendToSioma = !!file && !loading && validation && Array.isArray(validation.errores) && validation.errores.length === 0 && selectedFincaId && selectedLoteId;
+
+  const sendToSioma = async () => {
+    if (!file) return;
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (selectedFincaId) formData.append("finca_id", selectedFincaId);
+      if (selectedLoteId) formData.append("lote_id", selectedLoteId);
+      const res = await fetch("http://127.0.0.1:8000/sioma/enviar", { method: "POST", body: formData });
+      if (!res.ok) throw new Error(`Error del servidor: ${res.status}`);
+      const data = await res.json();
+      alert(data.message || "Enviado a Sioma exitosamente");
+    } catch (e: any) {
+      alert(e.message || "No se pudo enviar a Sioma");
+    }
+  };
+
   const normalize = (s: string) =>
     (s || "")
       .toString()
@@ -179,6 +197,8 @@ export default function FileUploader() {
           onValidate={() => file && validateWithBackend(file)}
           loading={loading}
           validation={validation}
+          onSendToSioma={sendToSioma}
+          canSend={!!canSendToSioma}
         />
 
         {file && (

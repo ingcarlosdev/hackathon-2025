@@ -20,7 +20,9 @@ export default function FileDropzone({
   onValidate,
   loading,
   validation,
-}: FileDropzoneProps) {
+  onSendToSioma,
+  canSend,
+}: FileDropzoneProps & { onSendToSioma?: () => void; canSend?: boolean }) {
   return (
     <section className="w-full max-w-4xl">
       <div
@@ -61,10 +63,10 @@ export default function FileDropzone({
           {loading ? "Validando..." : "Validar datos"}
         </button>
         <button
-          onClick={() => {}}
-          disabled={!file || loading || (validation?.errores?.length ?? 0) > 0}
+          onClick={onSendToSioma}
+          disabled={!canSend}
           className={`px-5 py-2 rounded-lg font-semibold text-white transition-colors shadow ${
-            !file || loading || (validation?.errores?.length ?? 0) > 0
+            !canSend
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-green-600 hover:bg-green-700"
           }`}
