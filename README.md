@@ -1,6 +1,14 @@
-# Excel to API CSV Reader
+# SIOMA PALMAS CHECKER
 
-Un proyecto full-stack que permite subir archivos Excel y CSV, procesarlos y convertirlos en una API REST.
+Aplicación web diseñada para optimizar la gestión de productores de palma, ofreciendo una experiencia intuitiva, rápida y fiable. Su objetivo es brindar herramientas prácticas que permitan realizar tareas completas, tales como: carga y validación de datos, visualización clara en el mapa y acceso detallado a la información de plantas, lotes y fincas, buscando maximizar resultados. 
+
+**CARACTERISTICAS**: ---------------------------------------------------------------------------------------------------------------------------------------
+- Carga y validación de archivos: consistiendo en un proceso seguro para importar datos de campo con comprobaciones automáticas y retroalimentación al usuario.
+- Mapa intuitivo y detallado: visualización sobre un mapa donde se muestran rutas y límites de las fincas de forma clara y navegable.
+- Fichas por unidad: información completa por planta,lote,finca con datos operativos, históricos y métricas de rendimiento.
+- UX y rendimiento: componentes modernos que aseguran usabilidad y respuesta eficiente con grandes volúmenes de datos.
+
+Todo esto, logra que el usuario pueda detectar a tiempo posibles ventajas, oportunidades, amenazas y/o desventajas, lo que será útil para el crecimiento de cada finca.
 
 ## Estructura del Proyecto
 
@@ -22,7 +30,13 @@ Un proyecto full-stack que permite subir archivos Excel y CSV, procesarlos y con
 - **FastAPI** - Framework web moderno y rápido para Python
 - **Pandas** - Manipulación y análisis de datos
 - **Uvicorn** - Servidor ASGI
-- **Python 3.8+** - Lenguaje de programación
+- **Python 3.13+** - Lenguaje de programación
+
+### Otras Herramientas
+- **Visual Studio Code**: Editor de código ligero y extensible con autocompletado, depuración integrada y terminal.
+- **Postman:** Aplicación para probar, depurar y documentar APIs mediante peticiones y colecciones de pruebas.
+- **Leaflet**: Librería JavaScript ligera para crear mapas interactivos en la web (marcadores, polígonos, capas).
+- **GitHub**: Plataforma para alojar repositorios Git, colaborar en código, gestionar issues y ejecutar CI/CD. 
 
 ## Instalación y Configuración
 
@@ -81,6 +95,8 @@ El frontend estará disponible en: `http://localhost:3000`
 - `GET /health` - Verificación de salud del servidor
 - `POST /upload-csv` - Subir y procesar archivos CSV
 - `POST /upload-excel` - Subir y procesar archivos Excel
+  
+Se realizaron pruebas de verificación usando la herramienta POSTMAN. 
 
 ### Documentación de la API
 
@@ -121,4 +137,13 @@ Para desarrollo simultáneo:
 3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
 4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abre un Pull Request
-"# hackathon-2025" 
+"# hackathon-2025"
+
+##**Autores**
+
+CARLOS ANDRES PALACIOS MENA
+
+ESNEIDER BALLESTA PAREDES
+
+KAREN VANESSA PATERNINA YEPES
+
