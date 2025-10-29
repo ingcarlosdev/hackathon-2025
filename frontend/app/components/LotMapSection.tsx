@@ -28,16 +28,20 @@ export default function LotMapSection({
   const puntosSeleccionados = useMemo(() => {
     if (!selectedLot) return [];
 
-    // Crear un mapa de filas que tienen errores
+    // Crear un set de filas que tienen errores (usando las filas originales del CSV, índice base 1)
+    const filasConErrores = new Set<number>();
     const erroresPorFila = new Map<number, string[]>();
+    
     if (validation?.errores) {
       validation.errores.forEach((err: any) => {
         if (err.fila) {
+          filasConErrores.add(err.fila);
           if (!erroresPorFila.has(err.fila)) erroresPorFila.set(err.fila, []);
           erroresPorFila.get(err.fila)!.push(err.tipo);
         }
         if (err.filas && Array.isArray(err.filas)) {
           err.filas.forEach((f: number) => {
+            filasConErrores.add(f);
             if (!erroresPorFila.has(f)) erroresPorFila.set(f, []);
             erroresPorFila.get(f)!.push(err.tipo);
           });
@@ -51,9 +55,12 @@ export default function LotMapSection({
     const posIdx = desiredDisplayHeaders.indexOf("Posición palma");
     const loteIdx = desiredDisplayHeaders.indexOf("Lote");
 
-    // Filtrar filas del lote y calcular índice real en el CSV original
+    // Filtrar filas del lote (las displayRows ya están filtradas por el lote en el componente padre)
+    // Necesitamos mapear de vuelta al índice original del CSV
+    // Como displayRows es un subset de las filas originales, necesitamos contar desde el inicio
+    // Por ahora, usamos el índice en displayRows + 1 como aproximación
     const rowsWithIndex = displayRows
-      .map((r, idx) => ({ row: r, displayIdx: idx + 1 }))
+      .map((r, displayIdx) => ({ row: r, csvRowIndex: displayIdx + 2 })) // +2 porque: +1 por header, +1 porque CSV es base 1
       .filter(({ row }) => String(row[loteIdx]) === selectedLot);
 
     return rowsWithIndex
@@ -62,17 +69,19 @@ export default function LotMapSection({
         const lon = Number(row[lonIdx]);
         if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
 
-        // Determinar tipo de error
-        const errores = erroresPorFila.get(displayIdx) || [];
+        // Determinar tipo de error usando el índice de fila del CSV original
+        const errores = erroresPorFila.get(csvRowIndex) || [];
+        const tieneError = filasConErrores.has(csvRowIndex);
+        
         let tipo: "valido" | "repetido" | "palma_repetida" | "fuera_rango" = "valido";
         if (errores.includes("coordenada_repetida")) tipo = "repetido";
         else if (errores.includes("posicion_repetida_en_linea") || errores.includes("linea_repetida_en_lote"))
           tipo = "palma_repetida";
         else if (errores.includes("coordenada_fuera_rango")) tipo = "fuera_rango";
-        else if (errores.length > 0) tipo = "repetido"; // fallback
+        else if (tieneError && errores.length > 0) tipo = "repetido"; // fallback para otros errores
 
         return {
-          id: `${selectedLot}-${row[lineaIdx] ?? ""}-${row[posIdx] ?? ""}-${displayIdx}`,
+          id: `${selectedLot}-${row[lineaIdx] ?? ""}-${row[posIdx] ?? ""}-${csvRowIndex}`,
           lat,
           lon,
           linea: row[lineaIdx],
