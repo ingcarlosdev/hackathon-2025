@@ -6,11 +6,12 @@ import FileDropzone from "@/app/components/FileDropzone";
 import CsvPreview from "@/app/components/CsvPreview";
 import ValidationResults from "@/app/components/ValidationResults";
 import LotMapSection from "@/app/components/LotMapSection";
+import FincaLoteSelector from "@/app/components/FincaLoteSelector"; // 👈 importa el selector
 
 export default function FileUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [fileText, setFileText] = useState<string>("");
+  const [setFileText] = useState<string>("");
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
   const [displayHeaders, setDisplayHeaders] = useState<string[]>([]);
@@ -20,6 +21,17 @@ export default function FileUploader() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [selectedLot, setSelectedLot] = useState<string>("");
 
+  // 👇 Nuevo estado para finca/lote seleccionados desde el selector
+  const [selectedFincaId, setSelectedFincaId] = useState<string>("");
+  const [selectedLoteId, setSelectedLoteId] = useState<string>("");
+
+  // Callback que recibe selección desde FincaLoteSelector
+  const handleFincaLoteChange = (fincaId: string, loteId: string) => {
+    setSelectedFincaId(fincaId);
+    setSelectedLoteId(loteId);
+  };
+
+  // --- Manejo de archivo CSV ---
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
@@ -41,7 +53,6 @@ export default function FileUploader() {
     const reader = new FileReader();
     reader.onload = () => {
       const text = (reader.result as string) || "";
-      setFileText(text);
       const { headers: h, rows: r } = parseCsv(text);
       setHeaders(h);
       setRows(r);
@@ -53,17 +64,14 @@ export default function FileUploader() {
   };
 
   const parseCsv = (text: string): { headers: string[]; rows: string[][] } => {
-    // Simple CSV parser for comma-separated values without quoted commas
-    const lines = text
-      .split(/\r?\n/)
-      .filter((l) => l.trim().length > 0);
+    const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
     if (lines.length === 0) return { headers: [], rows: [] };
-    const headerLine = lines[0];
-    const headers = headerLine.split(",").map((h) => h.trim());
+    const headers = lines[0].split(",").map((h) => h.trim());
     const rows = lines.slice(1).map((l) => l.split(",").map((c) => c.trim()));
     return { headers, rows };
   };
 
+  // --- Llamada al backend para validar ---
   const validateWithBackend = async (fileToValidate: File) => {
     setLoading(true);
     setApiError(null);
@@ -71,27 +79,30 @@ export default function FileUploader() {
     try {
       const formData = new FormData();
       formData.append("file", fileToValidate);
+
+      // 👇 Incluimos finca y lote seleccionados en el formData
+      if (selectedFincaId) formData.append("finca_id", selectedFincaId);
+      if (selectedLoteId) formData.append("lote_id", selectedLoteId);
+
       const res = await fetch("http://127.0.0.1:8000/validar-csv/", {
         method: "POST",
         body: formData,
       });
-      
-      if (!res.ok) {
-        throw new Error(`Error del servidor: ${res.status} ${res.statusText}`);
-      }
-      
+
+      if (!res.ok) throw new Error(`Error del servidor: ${res.status}`);
+
       const data = await res.json();
       setValidation(data);
     } catch (e: any) {
-      const errorMessage = e?.message || "Error al conectarse con el backend";
-      setApiError(`No se pudo conectar con el backend. Asegúrate de que esté corriendo en http://127.0.0.1:8000. Error: ${errorMessage}`);
-      console.error("Error de validación:", e);
+      setApiError(
+        `Error al conectar con el backend: ${e.message || "Error desconocido"}`
+      );
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
-  // Orden y nombres deseados para la visualización
   const desiredDisplayHeaders = [
     "Latitud",
     "Longitud",
@@ -108,18 +119,13 @@ export default function FileUploader() {
       .normalize("NFD")
       .replace(/\p{Diacritic}/gu, "");
 
-  // Reordenar filas para que coincidan con la estructura deseada
-  const reorderForDisplay = (
-    csvHeaders: string[],
-    csvRows: string[][]
-  ): { orderedHeaders: string[]; orderedRows: string[][] } => {
+  const reorderForDisplay = (csvHeaders: string[], csvRows: string[][]) => {
     const normToIndex: Record<string, number> = {};
     csvHeaders.forEach((h, i) => {
       normToIndex[normalize(h)] = i;
     });
 
-    // Mapa de columnas del CSV -> nombres deseados
-    const mapping: { desired: string; source: string }[] = [
+    const mapping = [
       { desired: "Latitud", source: "latitud" },
       { desired: "Longitud", source: "longitud" },
       { desired: "Línea palma", source: "linea" },
@@ -138,7 +144,6 @@ export default function FileUploader() {
     return { orderedHeaders, orderedRows };
   };
 
-  // Lotes detectados desde el CSV cargado
   const lotes = useMemo(() => {
     const loteIdx = desiredDisplayHeaders.findIndex((h) => h === "Lote");
     const set = new Set<string>();
@@ -149,13 +154,8 @@ export default function FileUploader() {
     return Array.from(set);
   }, [displayRows]);
 
-
-  // Validación automática cuando se carga el archivo
   useEffect(() => {
-    if (file) {
-      validateWithBackend(file);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (file) validateWithBackend(file);
   }, [file]);
 
   return (
@@ -163,6 +163,9 @@ export default function FileUploader() {
       <Header />
 
       <main className="flex flex-col gap-6 items-center flex-1 p-6">
+        {/* 👇 Agregamos el selector de finca y lote arriba del uploader */}
+        <FincaLoteSelector onSelectionChange={handleFincaLoteChange} />
+
         <FileDropzone
           file={file}
           isDragging={isDragging}
@@ -179,7 +182,11 @@ export default function FileUploader() {
         />
 
         {file && (
-          <CsvPreview headers={displayHeaders} rows={displayRows} totalRows={displayRows.length} />
+          <CsvPreview
+            headers={displayHeaders}
+            rows={displayRows}
+            totalRows={displayRows.length}
+          />
         )}
 
         <ValidationResults validation={validation} apiError={apiError} />
