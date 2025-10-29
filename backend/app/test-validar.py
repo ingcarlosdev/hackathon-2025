@@ -1,10 +1,10 @@
-from validators import validar_csv
+import os
+from dotenv import load_dotenv
 
+load_dotenv()  # carga variables del .env
 
-if __name__ == "__main__":
-    ruta_csv = "c://Users//udea-hackathon//Desktop//test//plantaciones.csv"  # coloca aquí tu archivo CSV
-    resultado = validar_csv(ruta_csv)
-    
-    # Mostrar el resultado de manera legible
-    import json
-    print(json.dumps(resultado, indent=2, ensure_ascii=False))
+SIOMA_API_BASE = os.getenv("SIOMA_API_BASE")
+SIOMA_API_KEY = os.getenv("SIOMA_API_KEY")
+
+print("SIOMA_API_BASE:", SIOMA_API_BASE)
+print("SIOMA_API_KEY:", SIOMA_API_KEY)

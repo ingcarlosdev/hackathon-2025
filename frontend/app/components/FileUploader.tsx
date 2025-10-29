@@ -3,7 +3,12 @@
 import Image from "next/image";
 import { useState } from "react";
 
-export default function FileUploader() {
+interface Props {
+  selectedFinca: string;
+  selectedLote: string;
+}
+
+export default function FileUploader({ selectedFinca, selectedLote }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -23,9 +28,13 @@ export default function FileUploader() {
 
   const handleSubmit = async () => {
     if (!file) return alert("Selecciona un archivo primero");
+    if (!selectedFinca || !selectedLote)
+      return alert("Selecciona finca y lote antes de subir el archivo");
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("fincaId", selectedFinca);
+    formData.append("loteId", selectedLote);
 
     const res = await fetch("http://127.0.0.1:8000/validar-csv/", {
       method: "POST",
@@ -38,19 +47,9 @@ export default function FileUploader() {
   };
 
   return (
-    <div className="min-h-screen bg-[#ffffff] flex flex-col">
-      {/* Header */}
-      <header className="bg-[#aa0f16] py-4 px-8 flex items-center shadow-md">
-        <Image
-          src="/sioma-logo.png"
-          alt="Sioma Logo"
-          width={171}
-          height={171}
-        />
-      </header>
-
+    <div className="mt-20 bg-[#ffffff] flex flex-col">
       {/* Contenido */}
-      <main className="flex flex-col items-center justify-center flex-1 p-8">
+      <div className="flex flex-col items-center justify-center flex-1 p-8">
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -93,7 +92,7 @@ export default function FileUploader() {
         >
           Validar CSV
         </button>
-      </main>
+      </div>
     </div>
   );
 }
