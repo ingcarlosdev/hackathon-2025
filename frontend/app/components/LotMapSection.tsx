@@ -12,7 +12,8 @@ interface LotMapSectionProps {
   lotes: string[];
   selectedLot: string;
   onLotChange: (lote: string) => void;
-  displayRows: string[][];
+  rows: string[][];
+  headers: string[];
   desiredDisplayHeaders: string[];
 }
 
@@ -21,7 +22,8 @@ export default function LotMapSection({
   lotes,
   selectedLot,
   onLotChange,
-  displayRows,
+  rows,
+  headers,
   desiredDisplayHeaders,
 }: LotMapSectionProps) {
   // Puntos para el mapa por lote seleccionado, marcando inválidos
@@ -49,22 +51,50 @@ export default function LotMapSection({
       });
     }
 
-    const latIdx = desiredDisplayHeaders.indexOf("Latitud");
-    const lonIdx = desiredDisplayHeaders.indexOf("Longitud");
-    const lineaIdx = desiredDisplayHeaders.indexOf("Línea palma");
-    const posIdx = desiredDisplayHeaders.indexOf("Posición palma");
-    const loteIdx = desiredDisplayHeaders.indexOf("Lote");
+    // Normalizar headers para mapeo
+    const normalize = (s: string) =>
+      (s || "")
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "");
 
-    // Filtrar filas del lote (las displayRows ya están filtradas por el lote en el componente padre)
-    // Necesitamos mapear de vuelta al índice original del CSV
-    // Como displayRows es un subset de las filas originales, necesitamos contar desde el inicio
-    // Por ahora, usamos el índice en displayRows + 1 como aproximación
-    const rowsWithIndex = displayRows
-      .map((r, displayIdx) => ({ row: r, csvRowIndex: displayIdx + 2 })) // +2 porque: +1 por header, +1 porque CSV es base 1
+    const normToIndex: Record<string, number> = {};
+    headers.forEach((h, i) => {
+      normToIndex[normalize(h)] = i;
+    });
+
+    // Mapear columnas del CSV original a las deseadas
+    const mapping: { desired: string; source: string }[] = [
+      { desired: "Latitud", source: "latitud" },
+      { desired: "Longitud", source: "longitud" },
+      { desired: "Línea palma", source: "linea" },
+      { desired: "Posición palma", source: "palma" },
+      { desired: "Lote", source: "lote" },
+    ];
+
+    const latIdx = mapping.findIndex((m) => m.desired === "Latitud");
+    const lonIdx = mapping.findIndex((m) => m.desired === "Longitud");
+    const lineaIdx = mapping.findIndex((m) => m.desired === "Línea palma");
+    const posIdx = mapping.findIndex((m) => m.desired === "Posición palma");
+    const loteIdx = mapping.findIndex((m) => m.desired === "Lote");
+
+    // Crear filas ordenadas para comparación
+    const orderedRows = rows.map((r) =>
+      mapping.map(({ source }) => {
+        const idx = normToIndex[source];
+        return idx !== undefined ? r[idx] : "";
+      })
+    );
+
+    // Filtrar filas del lote seleccionado, manteniendo el índice original del CSV (base 1)
+    const rowsWithIndex = orderedRows
+      .map((orderedRow, idx) => ({ row: orderedRow, csvRowIndex: idx + 2 })) // +2: +1 por header, +1 porque CSV es base 1
       .filter(({ row }) => String(row[loteIdx]) === selectedLot);
 
     return rowsWithIndex
-      .map(({ row, displayIdx }) => {
+      .map(({ row, csvRowIndex }) => {
         const lat = Number(row[latIdx]);
         const lon = Number(row[lonIdx]);
         if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
@@ -91,7 +121,7 @@ export default function LotMapSection({
         };
       })
       .filter((p): p is NonNullable<typeof p> => p !== null);
-  }, [displayRows, selectedLot, validation, desiredDisplayHeaders]);
+  }, [rows, headers, selectedLot, validation, desiredDisplayHeaders]);
 
   if (!validation || lotes.length === 0) return null;
 

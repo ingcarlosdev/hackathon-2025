@@ -189,7 +189,8 @@ export default function FileUploader() {
           lotes={lotes}
           selectedLot={selectedLot}
           onLotChange={setSelectedLot}
-          displayRows={displayRows}
+          rows={rows}
+          headers={headers}
           desiredDisplayHeaders={desiredDisplayHeaders}
         />
       </main>
