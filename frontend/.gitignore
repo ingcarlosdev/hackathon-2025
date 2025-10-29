@@ -1,0 +1,76 @@
+# ====================================
+# 🧩 GENERAL
+# ====================================
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# ====================================
+# 🔐 ENVIRONMENT FILES
+# ====================================
+.env
+.env.*
+!.env.example
+
+# ====================================
+# 🧠 PYTHON (FASTAPI BACKEND)
+# ====================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.sqlite3
+*.db
+
+# Virtual environment
+venv/
+.env/
+.venv/
+
+# Byte-compiled / optimized / DLL files
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# FastAPI / Uvicorn cache
+*.log
+*.pid
+
+# ====================================
+# ⚙️ NODE / NEXT.JS (FRONTEND)
+# ====================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Yarn PnP
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js build output
+.next/
+out/
+build/
+
+# Coverage reports
+coverage/
+
+# ====================================
+# 🚀 DEPLOYMENT / TOOLS
+# ====================================
+.vercel/
+.vscode/
+.idea/
+*.pem
